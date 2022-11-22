@@ -1,5 +1,5 @@
 struct Monomial
-    word::Array{Tuple{Integer,Array{Operator,1}},1}
+    word::Array{Tuple{Set{Int64},Array{Operator,1}},1}
 end
 
 function Monomial(party::Integer, operator::Operator)
