@@ -1,8 +1,8 @@
 struct Monomial
-    word::Array{Tuple{Set{Int64},Array{Operator,1}},1}
+    word::Array{Tuple{Array{Int64,1},Array{Operator,1}},1}
 end
 
-function Monomial(party::Set{Int64}, operator::Operator)
+function Monomial(party::Array{Int64,1}, operator::Operator)
     # @assert party > 0
     return Monomial([(party, [operator])])
 end
@@ -126,14 +126,14 @@ function join_monomials(x::Monomial, y::Monomial)
     for (py,opsy) in y.word
         for j in length(word):-1:1
             (px,opsx)=word[j]
-            if (intersect(py,px)==Set{Int64}()) && (sort(collect(py)) > sort(collect(px)))
+            if (intersect(py,px)==Int64[]) && ( sort(py) > sort(px) )
                 insert!(word,j+1,(py,opsy))
                 break
             end
 
-            if intersect(py,px)!=Set{Int64}()
+            if intersect(py,px)!=Int64[]
                 if py!=px
-                   (sort(collect(py)) > sort(collect(px))) ? insert!(word,j+1,(py,opsy)) : insert!(word,j,(py,opsy))
+                   insert!(word,j+1,(py,opsy))
                    break
                 end
                 if py==px

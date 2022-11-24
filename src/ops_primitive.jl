@@ -127,7 +127,7 @@ function stringfdef(name, fmt)
     fieldnames = [f for f in fmt.args if f isa Symbol]
 
     args = if (:party in fieldnames)
-               (:(x::$name), :(party::Set{Int64}))
+               (:(x::$name), :(party::Array{Int64,1}))
            else
                (:(x::$name),)
            end

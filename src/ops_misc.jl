@@ -22,7 +22,7 @@ end
 
 party_str(s::String) = s
 party_str(s::Symbol) = string(s)
-function party_str(p::Set{Int64})
+function party_str(p::Array{Int64,1})
     d="("
     for i in p
         d=d*party_str(i)
@@ -47,7 +47,7 @@ end
 party_num(c::Char) = pos(c)
 party_num(s::Symbol) = party_num(string(s))
 party_num(n::Integer) = n
-party_num(s::Set{Int64})=s
+party_num(s::Array{Int64,1})=s
 "Split string into party and rest, e.g. \"AB1\" -> (\"AB\", \"1\")."
 function split_party(s::String)
     k = findlast(in(alphabet), s)
