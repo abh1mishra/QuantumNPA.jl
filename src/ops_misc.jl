@@ -22,7 +22,13 @@ end
 
 party_str(s::String) = s
 party_str(s::Symbol) = string(s)
-
+function party_str(p::Set{Int64})
+    d="("
+    for i in p
+        d=d*party_str(i)
+    end
+    return d*")"
+end
 
 pos(c::Char) = findfirst(isequal(c), alphabet)
 
@@ -41,7 +47,7 @@ end
 party_num(c::Char) = pos(c)
 party_num(s::Symbol) = party_num(string(s))
 party_num(n::Integer) = n
-
+party_num(s::Set{Int64})=s
 "Split string into party and rest, e.g. \"AB1\" -> (\"AB\", \"1\")."
 function split_party(s::String)
     k = findlast(in(alphabet), s)
@@ -69,7 +75,7 @@ end
 function sgnnum(x::Number, p::String = "+", m::String = "-")
     xr = real(x)
     xi = imag(x)
-    
+
     if xi == 0
         return (csgn(xr, p, m), num2str(abs(xr)))
     elseif xr == 0
@@ -80,7 +86,7 @@ function sgnnum(x::Number, p::String = "+", m::String = "-")
         if xr >= 0
             xrs = num2str(xr)
             s = csgn(xi)
-            
+
             return (p, "($xrs $s $(xis)im)")
         else
             xrs = num2str(-xr)
