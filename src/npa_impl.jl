@@ -42,6 +42,29 @@ function npa_moments_block(operators)
     return block
 end
 
+function cyclic_npa_moments_block(operators)
+    N = length(operators)
+    iops = collect(enumerate(operators))
+    block = Dict{Monomial,SparseMatrixCSC}()
+
+    for (i, x) in iops
+        for (j, y) in iops[i:end]
+            p = Polynomial(cyclic_conj_min(conj(x)*y))
+
+            for (c, m) in p
+                if !haskey(block, m)
+                    block[m] = sparse_sym(N, i, j, c)
+                else
+                    sparse_sym_add!(block[m], i, j, c)
+                end
+            end
+        end
+    end
+
+    return block
+end
+
+
 """
 Construct the NPA moment matrix.
 
@@ -115,7 +138,7 @@ function npa2sdp(expr,
         moments = npa_moments(ops_at_level([expr, eq, ge],
                                            level_or_moments))
     end
-    
+
     # Reduce constraints to canonical form
     expr = conj_min(expr)
     eq = linspace(map(conj_min, eq))
@@ -159,7 +182,7 @@ function npa2sdp(expr,
     # for matrix in values(moments)
     #    dropzeros!(matrix)
     # end
-    
+
     moments = Moments(m => mat
                       for (m, mat) in moments
                           if !iszero(mat))
@@ -247,7 +270,7 @@ function sdp2jump(expr, moments;
         maximise = false
         s = -1
     end
-    
+
     model = !isnothing(solver) ? Model(solver) : Model()
 
     Z = [@variable(model, [1:n, 1:n], PSD) for n in blocksizes(moments)]
@@ -255,7 +278,7 @@ function sdp2jump(expr, moments;
     objective = (sum(LinearAlgebra.tr(s*G*Z[b])
                      for (b, G) in enumerate(blocks(moments[Id])))
                  + expr[Id])
-    
+
     if maximise
         @objective(model, Min, objective)
     else
@@ -265,7 +288,7 @@ function sdp2jump(expr, moments;
     for (m, moment) in moments
         if m != Id
             c = expr[m]
-            
+
             @constraint(model,
                         sum(LinearAlgebra.tr(F*Z[b])
                             for (b, F) in enumerate(blocks(moment)))

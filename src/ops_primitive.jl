@@ -87,6 +87,12 @@ function opcycles(ops::Vector{Operator})
             for j in 1:length(ops))
 end
 
+function opcycles(ops)
+    return [Monomial(m) for m in collect((vcat(ops[j:end], ops[1:j-1]))
+            for j in 1:length(ops)) ]
+end
+
+
 function trace(ops::Vector{Operator})
     (c, ops) = intrace_reduce(ops)
     return (c, minimum(opcycles(ops)))

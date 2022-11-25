@@ -102,8 +102,9 @@ Base.zero(m::Monomial) = 0
 
 conj_min(x::Number) = real(x)
 
-function conj_min(m::Monomial)
-    return min(m, conj(m))
+function cyclic_conj_min(m::Monomial)
+    altForms= vcat(opcycles(flatMonomial(m).word),opcycles(flatMonomial(conj(m)).word))
+    return min(altForms...)
 end
 
 
@@ -209,4 +210,8 @@ function ctrace(m::Monomial)
     m = Monomial([(p, ops) for (p, (_, ops)) in pcops])
 
     return (coeff == 1) ? m : (coeff, m)
+end
+
+function flatMonomial(m::Monomial)
+    return Monomial([(s,[ops]) for (s,opsArr) in m for ops in opsArr ])
 end
