@@ -87,9 +87,34 @@ function opcycles(ops::Vector{Operator})
             for j in 1:length(ops))
 end
 
-function opcycles(ops)
-    return [Monomial(m) for m in collect((vcat(ops[j:end], ops[1:j-1]))
-            for j in 1:length(ops)) ]
+# function opcycles(ops,subSys::Bool)
+#     return reorderMonomial.(Monomial.([vcat(ops[j:end],ops[1:j-1]) for j in 1:length(ops)]))
+# end
+
+function opcycles(ops,trace::Bool)
+    cycleMonArr=[]
+    N=length(ops)
+    for j in 1:N
+        cycledOps=reorderMonomial(Monomial(vcat(ops[2:end],ops[1])))
+        if cycledOps == 0
+            return 0
+        end
+        push!(cycleMonArr,cycledOps)
+        ops=cycledOps.word
+    end
+    return cycleMonArr
+end
+
+function simplifyOps(ops)
+    monend=join_monomials(Monomial([ops[end-1]]),Monomial([ops[end]]))
+    if monend isa Tuple
+        return nothing
+
+    else
+        # might need to flatten the returned monomial
+        return (monend==0) ? 0 : vcat(ops[1:end-2],monend.word)
+    end
+
 end
 
 

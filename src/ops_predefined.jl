@@ -78,7 +78,7 @@ function Base.:*(p::Projector, q::Projector)
     end
 end
 
-function projector(party, output::IndexRange, input::Integer,full::Bool=false)
+function projector(party, output::IndexRange, input::Integer;full::Bool=false)
     if full
         outputs = output[1:end-1]
         ps = [projector(party, o, input) for o in outputs]

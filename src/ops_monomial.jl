@@ -3,7 +3,7 @@ struct Monomial
 end
 
 function Monomial(party::Array{Int64,1}, operator::Operator)
-    # @assert party > 0
+    @assert all(>(0),party)
     return Monomial([(party, [operator])])
 end
 
@@ -86,9 +86,29 @@ end
 
 
 
-function Base.conj(m::Monomial)
-    return Monomial([(party, reverse!([conj(op) for op in ops]))
-                     for (party, ops) in m])
+# function Base.conj(m::Monomial)
+#     return
+# end
+
+function Base.conj(m::Monomial,cyclic::Bool)
+    if cyclic
+        # println(m)
+        return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
+                     for (party, ops) in reverse(m.word)]))
+    else
+        return Monomial([(party, reverse!([conj(op) for op in ops]))
+                         for (party, ops) in m])
+    end
+end
+
+function reorderMonomial(m::Monomial)
+    monArr=[Monomial([o]) for o in m.word]
+    if length(m)<=1
+        return m
+    end
+    # println("he",monArr)
+    return *(monArr...)
+
 end
 
 function Base.adjoint(m::Monomial)
@@ -102,10 +122,24 @@ Base.zero(m::Monomial) = 0
 
 conj_min(x::Number) = real(x)
 
-function cyclic_conj_min(m::Monomial)
-    altForms= vcat(opcycles(flatMonomial(m).word),opcycles(flatMonomial(conj(m)).word))
-    return min(altForms...)
+function conj_min(m::Monomial,cyclic::Bool)
+    if m==Id
+        return m
+    end
+    if !cyclic
+        return min(m, conj(m))
+    else
+        monCycles=opcycles(flatMonomial(m).word,true)
+        conjMonCycles=opcycles(flatMonomial(conj(m,true)).word,true)
+        # println(monCycles)
+        # println(conjMonCycles)
+        return ((monCycles==0) | (conjMonCycles==0)) ? 0 : min(vcat(monCycles,conjMonCycles)...)
+    end
 end
+
+# function cyclic_conj_min(m::Monomial)
+#
+# end
 
 
 
