@@ -34,12 +34,12 @@ For example:
 """
 function parse_level_term(term)
     term = strip(term)
-
+    println(term)
     if all(isdigit, term)
         return parse(Int, term)
     end
 
-    contribs = Dict{Int,Int}()
+    contribs = Vector{Tuple{Vector{Int64}, Int64}}()
 
     for party_str in split(term)
         if '^' in party_str
@@ -50,12 +50,7 @@ function parse_level_term(term)
         end
 
         party = party_num(party_str)
-
-        if haskey(contribs, party)
-            contribs[party] += power
-        else
-            contribs[party] = power
-        end
+        push!(contribs,(party,power))
     end
 
     return contribs
@@ -65,7 +60,7 @@ end
 Return a set of operators corresponding to a particular level term, such as
 "1" or "A B".
 """
-function make_term(term, ops::Dict{Integer,Set{Monomial}})
+function make_term(term, ops::Dict{Vector{Int64},Set{Monomial}})
     level = parse_level_term(term)
 
     if level isa Integer
@@ -74,7 +69,7 @@ function make_term(term, ops::Dict{Integer,Set{Monomial}})
         return ops_at_level(all_ops, level)
     else
         result = Set([Id])
-        
+
         for (party, power) in level
             ms = monomial_products(ops[party], power)
             result = nonzero_products(result, ms)
@@ -112,7 +107,7 @@ function ops_at_level(source, n::AbstractString)
     return ops_at_level(ops, n)
 end
 
-function ops_at_level(ops::Dict{Integer,Set{Monomial}}, n::AbstractString)
+function ops_at_level(ops::Dict{Vector{Int64},Set{Monomial}}, n::AbstractString)
     result = Set{Monomial}()
 
     for term in split(n, '+')

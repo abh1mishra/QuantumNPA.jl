@@ -39,7 +39,7 @@ coefficients(p::Polynomial) = values(p.terms)
 
 
 
-function add_monomials!(table::Dict{Integer,Set{Monomial}},
+function add_monomials!(table::Dict{Vector{Int64},Set{Monomial}},
                         itr)
     for x in itr
         add_monomials!(table, x)
@@ -48,7 +48,7 @@ function add_monomials!(table::Dict{Integer,Set{Monomial}},
     return table
 end
 
-function add_monomials!(table::Dict{Integer,Set{Monomial}},
+function add_monomials!(table::Dict{Vector{Int64},Set{Monomial}},
                         p::Polynomial)
     for m in monomials(p)
         add_monomials!(table, m)
@@ -58,7 +58,7 @@ function add_monomials!(table::Dict{Integer,Set{Monomial}},
 end
 
 "Update table of parties -> monomials with operators in a given monomial."
-function add_monomials!(table::Dict{Integer,Set{Monomial}},
+function add_monomials!(table::Dict{Vector{Int64},Set{Monomial}},
                         m::Monomial)
     for (p, ops) in m
         if !haskey(table, p)
@@ -82,7 +82,7 @@ function operators(itr; by_party::Bool=false)
     if !by_party
         return Set{Monomial}(flatten(map(operators, itr)))
     else
-        return add_monomials!(Dict{Integer,Set{Monomial}}(), itr)
+        return add_monomials!(Dict{Vector{Int64},Set{Monomial}}(), itr)
     end
 end
 
@@ -90,7 +90,7 @@ function operators(p::Polynomial; by_party::Bool=false)
     if !by_party
         return Set{Monomial}(flatten(operators(m) for m in monomials(p)))
     else
-        return add_monomials!(Dict{Integer,Set{Monomial}}(), p)
+        return add_monomials!(Dict{Vector{Int64},Set{Monomial}}(), p)
     end
 end
 
@@ -100,15 +100,15 @@ function operators(m::Monomial; by_party::Bool=false)
         return Set{Monomial}(Monomial(p, o)
                              for (p, ops) in m for o in ops)
     else
-        return add_monomials!(Dict{Integer,Set{Monomial}}(), m)
+        return add_monomials!(Dict{Vector{Int64},Set{Monomial}}(), m)
     end
 end
 
 function operators(x::Number; by_party::Bool=false)
-    return !by_party ? Set{Monomial}() : Dict{Integer,Set{Monomial}}()
+    return !by_party ? Set{Monomial}() : Dict{Vector{Int64},Set{Monomial}}()
 end
 
-function operators(table::Dict{Integer,Set{Monomial}}; by_party::Bool=false)
+function operators(table::Dict{Vector{Int64},Set{Monomial}}; by_party::Bool=false)
     if !by_party
         return reduce(union!, values(table); init=Set{Monomial}())
     else

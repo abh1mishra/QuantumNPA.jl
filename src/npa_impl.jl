@@ -28,7 +28,7 @@ function npa_moments_block(operators,cyclic::Bool)
 
     for (i, x) in iops
         for (j, y) in iops[i:end]
-            
+
             p = (cyclic) ? Polynomial(conj_min(conj(x,true)*y,true)) : Polynomial(conj_min(conj(x)*y))
             if(p==0)
                 continue
@@ -96,7 +96,7 @@ function npa_moments(operators)
     nblocks = length(operators)
     bsizes = length.(operators)
     blocks = npa_moments_block.(operators,true)
-
+    println(blocks)
     ms = monomials(keys(block) for block in blocks)
 
     moments = Moments()
@@ -144,7 +144,7 @@ function npa2sdp(expr,
     end
 
     # Reduce constraints to canonical form
-    expr = conj_min(expr)
+    expr = conj_min(expr,true)
     eq = linspace(map(conj_min, eq))
     ge = map(conj_min, ge)
 
@@ -279,9 +279,9 @@ function sdp2jump(expr, moments;
 
     Z = [@variable(model, [1:n, 1:n], PSD) for n in blocksizes(moments)]
 
-    objective = (sum(LinearAlgebra.tr(s*G*Z[b])
+    objective = conj_min(sum(LinearAlgebra.tr(s*G*Z[b])
                      for (b, G) in enumerate(blocks(moments[Id])))
-                 + expr[Id])
+                 + expr[Id],true)
 
     if maximise
         @objective(model, Min, objective)

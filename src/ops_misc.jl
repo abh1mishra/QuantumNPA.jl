@@ -34,19 +34,21 @@ pos(c::Char) = findfirst(isequal(c), alphabet)
 
 "Return integer representation of a party, e.g., `party_num(\"C\") = 3`."
 function party_num(s::AbstractString)
+    subsArr=[]
     base = length(alphabet)
-    party = 0
-
-    for c in s
-        party = pos(c) + base * party
+    for subs in split(s,',')
+        party = 0
+        for c in subs
+            party = pos(c) + base * party
+        end
+        push!(subsArr,party)
     end
-
-    return party
+    return subsArr
 end
 
-party_num(c::Char) = pos(c)
+party_num(c::Char) = [pos(c)]
 party_num(s::Symbol) = party_num(string(s))
-party_num(n::Integer) = n
+party_num(n::Integer) = [n]
 party_num(s::Array{Int64,1})=s
 "Split string into party and rest, e.g. \"AB1\" -> (\"AB\", \"1\")."
 function split_party(s::String)
