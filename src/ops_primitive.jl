@@ -94,13 +94,16 @@ end
 function opcycles(ops,trace::Bool)
     cycleMonArr=[]
     N=length(ops)
+    if N==0
+        return Id
+    end
     for j in 1:N
-        cycledOps=reorderMonomial(Monomial(vcat(ops[2:end],ops[1])))
+        ops=vcat(ops[2:end],ops[1])
+        cycledOps=reorderMonomial(Monomial(ops))
         if cycledOps == 0
             return 0
         end
         push!(cycleMonArr,cycledOps)
-        ops=cycledOps.word
     end
     return cycleMonArr
 end
