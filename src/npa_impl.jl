@@ -145,8 +145,13 @@ function npa2sdp(expr,
 
     # Reduce constraints to canonical form
     expr = conj_min(expr,true)
-    eq = linspace(map(conj_min, eq))
-    ge = map(conj_min, ge)
+    for i in enumerate(eq)
+        eq[i[1]]=conj_min(eq[i[1]],true)
+    end
+    for i in enumerate(ge)
+        ge[i[1]]=conj_min(ge[i[1]],true)
+    end
+    eq = linspace(eq)
 
     if haskey(eq, Id)
         @error "Contradiction Id = 0 in equality constraints."

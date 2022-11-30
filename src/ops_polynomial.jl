@@ -340,7 +340,7 @@ Base.length(p::Polynomial) = length(p.terms)
 
 
 function conj_min(p::Polynomial,cyclic::Bool)
-    return psum(conj_min(c) * conj_min(m,cyclic) for (c, m) in p)
+    return psum(conj_min(c) * conj_min(m,true) for (c, m) in p)
 end
 
 # function cyclic_conj_min(p::Polynomial)
