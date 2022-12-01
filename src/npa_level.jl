@@ -34,7 +34,6 @@ For example:
 """
 function parse_level_term(term)
     term = strip(term)
-    println(term)
     if all(isdigit, term)
         return parse(Int, term)
     end

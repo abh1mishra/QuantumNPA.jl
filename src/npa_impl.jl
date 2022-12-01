@@ -96,7 +96,6 @@ function npa_moments(operators)
     nblocks = length(operators)
     bsizes = length.(operators)
     blocks = npa_moments_block.(operators,true)
-    println(blocks)
     ms = monomials(keys(block) for block in blocks)
 
     moments = Moments()

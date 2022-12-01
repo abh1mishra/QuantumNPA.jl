@@ -92,7 +92,7 @@ end
 
 function Base.conj(m::Monomial,cyclic::Bool)
     if cyclic
-        # println(m)
+        # can simplify conj for subsystems by doing
         return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
                      for (party, ops) in reverse(m.word)]))
     else
@@ -106,7 +106,6 @@ function reorderMonomial(m::Monomial)
     if length(m)<=1
         return m
     end
-    # println("he",monArr)
     return *(monArr...)
 
 end
@@ -130,7 +129,14 @@ function conj_min(m::Monomial,cyclic::Bool)
         return min(m, conj(m))
     else
         monCycles=opcycles(flatMonomial(m).word,true)
-        conjMonCycles=opcycles(flatMonomial(conj(m,true)).word,true)
+        #=
+
+
+        Need to put conjugate of operators in conjMonCycles, now not necessary as dealing with projectors
+
+
+        =#
+        conjMonCycles=opcycles(reverse!(flatMonomial(m).word),true)
         # println(monCycles)
         # println(conjMonCycles)
         return ((monCycles==0) | (conjMonCycles==0)) ? 0 : min(vcat(monCycles,conjMonCycles)...)
