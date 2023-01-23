@@ -285,10 +285,12 @@ function M2PM(m::Monomial)
            end
      end
 
-     for (key,value) in a
-         *([Monomial([i]) for i in value])
-         if Monomial([value[1]]) == Monomial([value[length(value)]])
-             pop!(value)
+     for (key,value) in a.pword
+        monArr=[Monomial([i]) for i in value]
+        push!(monArr,Id)
+         a.pword[key]=flatMonomial(*(monArr...)).word
+         if Monomial([a.pword[key][1]]) == Monomial([a.pword[key][length(a.pword[key])]]) && length(a.pword[key])>1
+             pop!(a.pword[key])
          end
      end
      return a
