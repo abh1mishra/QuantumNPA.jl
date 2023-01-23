@@ -33,7 +33,12 @@ monomials(m::Monomial) = (m,)
 
 max_monomial(x) = maximum(all_monomials(x))
 
+# ***************
 
+
+"Return the Pmonomials in polynomial x."
+
+monomials(m::PMonomial) = (m,)
 
 coefficients(p::Polynomial) = values(p.terms)
 

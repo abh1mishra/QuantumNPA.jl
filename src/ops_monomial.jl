@@ -94,16 +94,16 @@ end
 #     return
 # end
 
-function Base.conj(m::Monomial,cyclic::Bool)
-    if cyclic
-        # can simplify conj for subsystems by doing
-        return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
-                     for (party, ops) in reverse(m.word)]))
-    else
-        return Monomial([(party, reverse!([conj(op) for op in ops]))
-                         for (party, ops) in m])
-    end
-end
+# function Base.conj(m::Monomial,cyclic::Bool)
+#     if cyclic
+#         # can simplify conj for subsystems by doing
+#         return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
+#                      for (party, ops) in reverse(m.word)]))
+#     else
+#         return Monomial([(party, reverse!([conj(op) for op in ops]))
+#                          for (party, ops) in m])
+#     end
+# end
 
 function Base.conj(m::Monomial,cyclic::Bool)
     if cyclic
@@ -297,7 +297,6 @@ function M2PM(m::Monomial)
 end
 
 function Base.:(==)(x::PMonomial, y::PMonomial)
-    println("checked")
     if keys(x.pword)==keys(y.pword)
         for (key,value) in x.pword
             if length(value)==length(y.pword[key])
@@ -309,8 +308,8 @@ function Base.:(==)(x::PMonomial, y::PMonomial)
             else
                 return false
             end
-        return true
         end
+        return true
     else
         return false
     end
