@@ -1,7 +1,9 @@
 struct Monomial
     word::Array{Tuple{Array{Int64,1},Array{Operator,1}},1}
 end
-
+struct PMonomial
+    pword::Dict{Int64,Array{Tuple{Array{Int64,1},Array{Operator,1}},1} }
+end
 function Monomial(party::Array{Int64,1}, operator::Operator)
     @assert all(>(0),party)
     return Monomial([(party, [operator])])
@@ -19,6 +21,8 @@ Base.iterate(m::Monomial, state) = iterate(m.word, state)
 Base.length(m::Monomial) = length(m.word)
 
 Base.hash(m::Monomial, h::UInt) = hash(m.word, h)
+Base.hash(pm::PMonomial, h::UInt) = hash(length(pm.pword), h)
+
 
 function Base.show(io::IO, m::Monomial)
     if isidentity(m)
@@ -98,6 +102,17 @@ function Base.conj(m::Monomial,cyclic::Bool)
     else
         return Monomial([(party, reverse!([conj(op) for op in ops]))
                          for (party, ops) in m])
+    end
+end
+
+function Base.conj(m::Monomial,cyclic::Bool)
+    if cyclic
+        # can simplify conj for subsystems by doing
+        return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
+                     for (party, ops) in reverse(m.word)]))
+    else
+        return Monomial( reverse!([(party, reverse!([conj(op) for op in ops]))
+                         for (party, ops) in m]))
     end
 end
 
@@ -254,4 +269,47 @@ end
 
 function flatMonomial(m::Monomial)
     return Monomial([(s,[ops]) for (s,opsArr) in m for ops in opsArr ])
+end
+
+
+function M2PM(m::Monomial)
+    a=PMonomial(Dict())
+    m=flatMonomial(m)
+    for i in m.word
+           for j in i[1]
+               if haskey(a.pword,j)
+                   push!(a.pword[j],i)
+               else
+                   a.pword[j]=[i]
+               end
+           end
+     end
+
+     for (key,value) in a
+         *([Monomial([i]) for i in value])
+         if Monomial([value[1]]) == Monomial([value[length(value)]])
+             pop!(value)
+         end
+     end
+     return a
+end
+
+function Base.:(==)(x::PMonomial, y::PMonomial)
+    println("checked")
+    if keys(x.pword)==keys(y.pword)
+        for (key,value) in x.pword
+            if length(value)==length(y.pword[key])
+                Str=string(Monomial(y.pword[key]))
+                conjStr=string(conj(Monomial(y.pword[key]),false))
+                if !( occursin(string(Monomial(value)), Str*" "*Str ) || occursin(string(Monomial(value)), conjStr*" "*conjStr ) )
+                    return false
+                end
+            else
+                return false
+            end
+        return true
+        end
+    else
+        return false
+    end
 end
