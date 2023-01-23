@@ -2,6 +2,10 @@ struct Polynomial
     terms::Dict{Monomial,Number}
 end
 
+struct PPolynomial
+    pterms::Dict{PMonomial,Number}
+end
+
 Polynomial() = Polynomial(Dict{Monomial,Number}())
 
 Polynomial(x::Number) = Polynomial((x != 0) ? Dict(Id => demote(x)) : Dict())
@@ -310,7 +314,7 @@ comm(x, y) = x*y - y*x
 
 acomm(x::Number, y::Number) = 2*rmul(x, y)
 acomm(x::Number, y::Monomial) = Polynomial(2*x, y)
-acomm(x::Monomial, y::Number) = Polynomail(2*y, x)
+acomm(x::Monomial, y::Number) = Polynomial(2*y, x)
 acomm(x, y) = x*y + y*x
 
 
@@ -360,3 +364,15 @@ function trace(m::Monomial)
 end
 
 trace(p::Polynomial) = psum(c*trace(m) for (c, m) in p)
+
+function P2PP(p::Polynomial)
+    pp=PPolynomial(Dict())
+    for (key,value) in p.terms
+        if !haskey(pp.pterms,M2PM(key))
+            pp.pterms[M2PM(key)]=value
+        else
+            pp.pterms[M2PM(key)]+=value
+        end
+    end
+    return pp
+end
