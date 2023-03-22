@@ -9,7 +9,9 @@ Base.sort(g::Sortable; kws...) = sort!([x for x in g]; kws...)
 function Base.sort(p::Polynomial)
     return sort!([(c, m) for (c, m) in p], by=(x -> x[2]))
 end
-
+function Base.sort(p::PPolynomial)
+    return sort!([(c, m) for (c, m) in p], by=(x -> x[2]))
+end
 
 
 "Return all monomials in arguments including duplicates."
@@ -33,7 +35,12 @@ monomials(m::Monomial) = (m,)
 
 max_monomial(x) = maximum(all_monomials(x))
 
+# ***************
 
+
+"Return the Pmonomials in polynomial x."
+
+monomials(m::PMonomial) = (m,)
 
 coefficients(p::Polynomial) = values(p.terms)
 

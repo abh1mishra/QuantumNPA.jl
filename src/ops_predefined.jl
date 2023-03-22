@@ -1,3 +1,5 @@
+@operator Freeop() "O$party"
+
 @operator Dichotomic(input::Integer) ("$party$input", "/$input")
 
 function Base.:*(x::Dichotomic, y::Dichotomic)

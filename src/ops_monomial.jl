@@ -14,7 +14,7 @@ Monomial(party, operator::Operator) = Monomial(party_num(party), operator)
 Id = Monomial([])
 
 isidentity(m::Monomial) = isempty(m)
-
+isidentity(m::PMonomial) = isempty(m.pword)
 Base.iterate(m::Monomial) = iterate(m.word)
 Base.iterate(m::Monomial, state) = iterate(m.word, state)
 
@@ -39,6 +39,21 @@ function Base.show(io::IO, m::Monomial)
         end
     end
 end
+
+function Base.show(io::IO, x::PMonomial)
+    if isidentity(x)
+        print(io, "Id")
+    else
+        for (key,value) in x.pword
+            print(io,key,"-->")
+            for i in value
+                print(io,Monomial(i[1],i[2]...)," ")
+            end
+        end
+    end
+end
+
+
 
 degree(x::Number) = !iszero(x) ? 0 : -Inf
 
@@ -94,16 +109,16 @@ end
 #     return
 # end
 
-function Base.conj(m::Monomial,cyclic::Bool)
-    if cyclic
-        # can simplify conj for subsystems by doing
-        return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
-                     for (party, ops) in reverse(m.word)]))
-    else
-        return Monomial([(party, reverse!([conj(op) for op in ops]))
-                         for (party, ops) in m])
-    end
-end
+# function Base.conj(m::Monomial,cyclic::Bool)
+#     if cyclic
+#         # can simplify conj for subsystems by doing
+#         return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
+#                      for (party, ops) in reverse(m.word)]))
+#     else
+#         return Monomial([(party, reverse!([conj(op) for op in ops]))
+#                          for (party, ops) in m])
+#     end
+# end
 
 function Base.conj(m::Monomial,cyclic::Bool)
     if cyclic
@@ -271,7 +286,7 @@ function flatMonomial(m::Monomial)
     return Monomial([(s,[ops]) for (s,opsArr) in m for ops in opsArr ])
 end
 
-
+M2PM(x::Int64)=x
 function M2PM(m::Monomial)
     a=PMonomial(Dict())
     m=flatMonomial(m)
@@ -289,15 +304,16 @@ function M2PM(m::Monomial)
         monArr=[Monomial([i]) for i in value]
         push!(monArr,Id)
          a.pword[key]=flatMonomial(*(monArr...)).word
-         if Monomial([a.pword[key][1]]) == Monomial([a.pword[key][length(a.pword[key])]]) && length(a.pword[key])>1
+         if (Monomial([a.pword[key][1]]) == Monomial([a.pword[key][length(a.pword[key])]]) && length(a.pword[key])>1) & (typeof(a.pword[key][1][2][1])==Projector)
              pop!(a.pword[key])
          end
      end
      return a
 end
+ 
+
 
 function Base.:(==)(x::PMonomial, y::PMonomial)
-    println("checked")
     if keys(x.pword)==keys(y.pword)
         for (key,value) in x.pword
             if length(value)==length(y.pword[key])
@@ -309,8 +325,8 @@ function Base.:(==)(x::PMonomial, y::PMonomial)
             else
                 return false
             end
-        return true
         end
+        return true
     else
         return false
     end

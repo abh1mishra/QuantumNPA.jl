@@ -25,6 +25,15 @@ new_polynomial(p::Polynomial) = copy(p)
 
 # Iteration over Polynomials.
 
+function swap_mc(result::Tuple{Pair{Monomial, Number}, Int64})
+    if isnothing(result)
+        return nothing
+    else
+        ((m, c), state) = result
+        return (Pair{Number,Monomial}(c, m), state)
+    end
+end
+
 function swap_mc(result)
     if isnothing(result)
         return nothing
@@ -74,10 +83,8 @@ end
 
 """
 Degree of a polynomial.
-
 degree(0) returns negative infinity. With this definition the following rules
 hold even if one or both of P or Q are zero:
-
   degree(P + Q) == max(degree(P), degree(Q))
   degree(P - Q) <= max(degree(P), degree(Q))
   degree(P * Q) == degree(P) + degree(Q)

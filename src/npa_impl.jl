@@ -1,4 +1,4 @@
-Moments = Dict{Monomial}{BlockDiagonal}
+Moments = Dict{PMonomial}{BlockDiagonal}
 
 function sparse_sym_add!(matrix, i, j, val)
     matrix[i, j] += val
@@ -20,41 +20,19 @@ function sparse_sym(N, i, j, val)
     end
 end
 
-function npa_moments_block(operators,cyclic::Bool)
-    N = length(operators)
-    iops = collect(enumerate(operators))
-    # println(typiops)
-    block = Dict{Monomial,SparseMatrixCSC}()
-
-    for (i, x) in iops
-        for (j, y) in iops[i:end]
-
-            p = (cyclic) ? Polynomial(conj_min(conj(x,true)*y,true)) : Polynomial(conj_min(conj(x)*y))
-            if(p==0)
-                continue
-            end
-            for (c, m) in p
-                if !haskey(block, m)
-                    block[m] = sparse_sym(N, i, j, c)
-                else
-                    sparse_sym_add!(block[m], i, j, c)
-                end
-            end
-        end
-    end
-
-    return block
-end
-
-# function cyclic_npa_moments_block(operators)
+# function npa_moments_block(operators,cyclic::Bool)
 #     N = length(operators)
 #     iops = collect(enumerate(operators))
+#     # println(typiops)
 #     block = Dict{Monomial,SparseMatrixCSC}()
-#
+
 #     for (i, x) in iops
 #         for (j, y) in iops[i:end]
-#             p = Polynomial(cyclic_conj_min(conj(x)*y))
-#
+
+#             p = (cyclic) ? Polynomial(conj_min(conj(x,true)*y,true)) : Polynomial(conj_min(conj(x)*y))
+#             if(p==0)
+#                 continue
+#             end
 #             for (c, m) in p
 #                 if !haskey(block, m)
 #                     block[m] = sparse_sym(N, i, j, c)
@@ -64,9 +42,30 @@ end
 #             end
 #         end
 #     end
-#
+
 #     return block
 # end
+
+function cyclic_npa_moments_block(operators)
+    N = length(operators)
+    iops = collect(enumerate(operators))
+    block = Dict{PMonomial,SparseMatrixCSC}()
+
+    for (i, x) in iops
+        for (j, y) in iops[i:end]
+            p = Polynomial(conj(x,false)*y)
+            for (c, m) in p
+                if !haskey(block, M2PM(m))
+                    block[M2PM(m)] = sparse_sym(N, i, j, c)
+                else
+                    sparse_sym_add!(block[M2PM(m)], i, j, c)
+                end
+            end
+        end
+    end
+
+    return block
+end
 
 
 """
@@ -84,7 +83,35 @@ value is a dictionary with:
   * as values: block-diagonal sparse matrices with coefficients obtained
     from multiplying the input operators together.
 """
-function npa_moments(operators)
+# function npa_moments(operators)
+#     if isempty(operators)
+#         return moments
+#     end
+
+#     if first(operators) isa Union{Number,PMonomial,Polynomial}
+#         operators = [operators]
+#     end
+
+#     nblocks = length(operators)
+#     bsizes = length.(operators)
+#     blocks = npa_moments_block.(operators,true)
+#     ms = monomials(keys(block) for block in blocks)
+
+#     moments = Moments()
+
+#     for m in ms
+#         blocks_m = [(haskey(block, m)
+#                      ? block[m]
+#                      : (n -> spzeros(n, n))(bsizes[b]))
+#                     for (b, block) in enumerate(blocks)]
+
+#         moments[m] = BlockDiagonal(blocks_m)
+#     end
+
+#     return moments
+# end
+
+function cyclic_npa_moments(operators)
     if isempty(operators)
         return moments
     end
@@ -95,7 +122,7 @@ function npa_moments(operators)
 
     nblocks = length(operators)
     bsizes = length.(operators)
-    blocks = npa_moments_block.(operators,true)
+    blocks = cyclic_npa_moments_block.(operators)
     ms = monomials(keys(block) for block in blocks)
 
     moments = Moments()
@@ -112,6 +139,19 @@ function npa_moments(operators)
     return moments
 end
 
+
+# Creates moment matrix starting from a polynomial Op
+function cyclic_pol_moments(Op::Polynomial, operators)
+    s=size(operators)[1]
+    res=Dict(P2PP(operators[i]*Op*operators[j]) => zeros(s,s)
+                                    for i in 1:s for j in 1:s)
+    for i in 1:s
+        for j in 1:s
+            res[P2PP(operators[i]*Op*operators[j])][i,j]=1
+        end
+    end
+    return res            
+end
 
 
 function SparseArrays.dropzeros!(matrix::BlockDiagonal)

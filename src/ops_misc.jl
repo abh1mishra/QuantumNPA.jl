@@ -106,7 +106,7 @@ function firstcoeff2string(x::Number)
         return "-"
     else
         (s, xs) = sgnnum(x, "", "-")
-        return "$s$xs "
+        return "( $s$xs ) "
     end
 end
 
@@ -117,6 +117,6 @@ function coeff2string(x::Number)
         return " - "
     else
         (s, xs) = sgnnum(x)
-        return " $s $xs "
+        return "( $s $xs )"
     end
 end

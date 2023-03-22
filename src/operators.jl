@@ -29,6 +29,10 @@ include("ops_monomial.jl")
 # coefficients) and supporting functions.
 include("ops_polynomial.jl")
 
+# Definition of ppolynomials (linear combinations of monomials multiplied by
+# coefficients) and supporting functions.
+include("ops_ppolynomial.jl")
+
 # Utility functions for dealing with monomials and polynomials, e.g.,
 # return all the individual monomials in a monomial or polynomial,
 # reduce a list of polynomial constraints to a canonical form.
