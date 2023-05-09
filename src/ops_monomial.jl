@@ -183,6 +183,7 @@ end
 Concatenate two monomials. This is used later to decide what the result
 of multiplying two monomials is.
 """
+
 function join_monomials(x::Monomial, y::Monomial)
     coeff = 1
 
@@ -217,6 +218,9 @@ function join_monomials(x::Monomial, y::Monomial)
                        deleteat!(word,j)
                        insert!(word,j, (px, ops))
                        break
+                    else
+                        deleteat!(word,j)
+                        break
                     end
                 end
 
@@ -227,10 +231,14 @@ function join_monomials(x::Monomial, y::Monomial)
 
         end
     end
+    if isempty(word)
+        return Id
+    end
     m = Monomial(word)
     return (coeff == 1) ? m : (coeff, m)
 
 end
+
 
 
 #             # if px < py

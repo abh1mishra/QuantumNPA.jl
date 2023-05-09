@@ -6,6 +6,7 @@ using Combinatorics
 
 using JuMP
 using SCS
+using Mosek, MosekTools
 
 using LinearAlgebra
 
