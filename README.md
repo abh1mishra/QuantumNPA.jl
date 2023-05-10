@@ -17,7 +17,7 @@ include("qnpa.jl");
 
 ```
 G=0.6
-σ = freeop([1])
+σ = freeop([1],1)
 ρ = projector([1], 1, 1:3)
 PB = projector([1], 1:2, 1:2, full=true)
 ge = [σ-1/3*ρ[i] for i in 1:3]
