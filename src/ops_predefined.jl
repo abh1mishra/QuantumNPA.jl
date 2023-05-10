@@ -1,4 +1,4 @@
-@operator Freeop() "O$party"
+@operator Freeop(input::Integer) ("$party$input", "/$input")
 
 @operator Dichotomic(input::Integer) ("$party$input", "/$input")
 
