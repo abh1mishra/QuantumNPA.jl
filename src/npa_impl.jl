@@ -155,7 +155,7 @@ function cyclic_pol_moments(Op::Polynomial, operators)
             res[P2PP(operators[i]*Op*operators[j])][i,j]=1
         end
     end
-    return res            
+    return res
 end
 
 
@@ -292,20 +292,21 @@ be defined commuting or non commuting.
 """
 
 function npa_general( obj, level::Int64 ; 
-                    eq = 0, 
-                    ge = 0 ,
-                    eq_constr = 0,
-                    ge_constr = 0,
-                    show_moments=false,
-                    verbose=false)
+                    op_eq = 0, 
+                    op_ge = 0 ,
+                    tr_eq = 0,
+                    tr_ge = 0,
+                    show_moments = false,
+                    verbose = false,
+                    termination = false)
     obj=Polynomial(obj)
-    ops = ops_at_level([obj, ge, eq], level)
-    pol = 1+sum(ge)+sum(eq)
+    ops = ops_at_level([vcat([obj, op_ge, op_eq], [tr_eq[i][1] for i in 1:length(tr_eq)]) ], level)
+    pol = 1+sum(op_ge)+sum(op_eq)
     deg = Int(ceil(degree(pol)/2))
-    ops_add = ops_at_level([ge,eq], deg)
+    ops_add = ops_at_level([op_ge,op_eq], deg)
     ops_principal = unique([ops_add[o]*ops[p] 
                             for o in 1:length(ops_add) for p in 1:length(ops)])
-    
+
     model = Model(Mosek.Optimizer)
 
     moments_p = cyclic_npa_moments(ops_principal)
@@ -315,35 +316,35 @@ function npa_general( obj, level::Int64 ;
                 sum(Γ[m].*moments_p[m] for m in mons_p) >= 0,
                 PSDCone())
 
-    eq_constr=[[P2PP(1*eq_constr[x][1]),eq_constr[x][2]] for x in 1:length(eq_constr)]
-    if eq_constr!=0
-        [@constraint(model, sum(Γ[m]*eq_constr[x][1][m] for m in mons_p) == eq_constr[x][2]) for x in 1:length(eq_constr) ]
+    tr_eq=[[P2PP(1*tr_eq[x][1]),tr_eq[x][2]] for x in 1:length(tr_eq)]
+    if tr_eq!=0
+        [@constraint(model, sum(Γ[m]*tr_eq[x][1][m] for m in mons_p) == tr_eq[x][2]) for x in 1:length(tr_eq) ]
     end
 
-    ge_constr=[[P2PP(1*ge_constr[x][1]),ge_constr[x][2]] for x in 1:length(ge_constr)]
-    if ge_constr!=0
-        [@constraint(model, sum(Γ[m]*ge_constr[x][1][m] for m in mons_p) >= ge_constr[x][2]) for x in 1:length(ge_constr) ]
+    tr_ge=[[P2PP(1*tr_ge[x][1]),tr_ge[x][2]] for x in 1:length(tr_ge)]
+    if tr_ge!=0
+        [@constraint(model, sum(Γ[m]*tr_ge[x][1][m] for m in mons_p) >= tr_ge[x][2]) for x in 1:length(tr_ge) ]
     end
 
-    if eq!=0
-        moments_eq = [cyclic_npa_moments(ops,eq[x]) for x in 1:length(eq)]
-        mons_eq = [keys(moments_eq[x]) for x in 1:length(eq)]
+    if op_eq!=0
+        moments_eq = [cyclic_npa_moments(ops,op_eq[x]) for x in 1:length(op_eq)]
+        mons_eq = [keys(moments_eq[x]) for x in 1:length(op_eq)]
 
         [@constraint(model,
                 sum(Γ[m].*moments_eq[x][m] for m in mons_eq[x]) >= 0,
-                PSDCone()) for x in 1:length(eq)]
+                PSDCone()) for x in 1:length(op_eq)]
 
         [@constraint(model,
                 sum(Γ[m].*moments_eq[x][m] for m in mons_eq[x]) <= 0,
-                PSDCone()) for x in 1:length(eq)]
+                PSDCone()) for x in 1:length(op_eq)]
     end
-    if ge!=0
-        moments_ge = [cyclic_npa_moments(ops,ge[x]) for x in 1:length(ge)]
-        mons_ge = [keys(moments_ge[x]) for x in 1:length(ge)]
+    if op_ge!=0
+        moments_ge = [cyclic_npa_moments(ops,op_ge[x]) for x in 1:length(op_ge)]
+        mons_ge = [keys(moments_ge[x]) for x in 1:length(op_ge)]
     
         [@constraint(model,
                     sum(Γ[m].*moments_ge[x][m] for m in mons_ge[x]) >= 0,
-                    PSDCone()) for x in 1:length(ge)]
+                    PSDCone()) for x in 1:length(op_ge)]
     end
     obj=P2PP(obj)
     @objective(model, Min, sum(obj[m]*Γ[m] for m in mons_p))
@@ -351,14 +352,29 @@ function npa_general( obj, level::Int64 ;
         set_silent(model)
     end
     optimize!(model)
+    println(termination_status(model))
+
     if show_moments==false
-        return objective_value(model)
-    else
-        if ge==0
-            return objective_value(model), sum(value(Γ[m])*moments_p[m] for m in mons_p)
+        if termination==true
+            return objective_value(model), termination_status(model)
         else
-            return objective_value(model), sum(value(Γ[m])*moments_p[m] for m in mons_p), 
-                [sum(value(Γ[m])*moments_ge[x][m] for m in mons_ge[x]) for x in 1:length(ge)]
+            return objective_value(model)
+        end
+    else
+        if op_ge==0
+            if termination==true
+                return objective_value(model), sum(value(Γ[m])*moments_p[m] for m in mons_p), termination_status(model)
+            else
+                return objective_value(model), sum(value(Γ[m])*moments_p[m] for m in mons_p)
+            end
+        else
+            if termination==true
+                return objective_value(model), sum(value(Γ[m])*moments_p[m] for m in mons_p), 
+                    [sum(value(Γ[m])*moments_ge[x][m] for m in mons_ge[x]) for x in 1:length(op_ge)], termination_status(model)
+            else
+                return objective_value(model), sum(value(Γ[m])*moments_p[m] for m in mons_p), 
+                    [sum(value(Γ[m])*moments_ge[x][m] for m in mons_ge[x]) for x in 1:length(op_ge)]
+            end
         end
     end
 end
