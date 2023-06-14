@@ -316,13 +316,13 @@ function npa_general( obj, level::Int64 ;
                 sum(Γ[m].*moments_p[m] for m in mons_p) >= 0,
                 PSDCone())
 
-    tr_eq=[[P2PP(1*tr_eq[x][1]),tr_eq[x][2]] for x in 1:length(tr_eq)]
     if tr_eq!=0
+        tr_eq=[[P2PP(1*tr_eq[x][1]),tr_eq[x][2]] for x in 1:length(tr_eq)]
         [@constraint(model, sum(Γ[m]*tr_eq[x][1][m] for m in mons_p) == tr_eq[x][2]) for x in 1:length(tr_eq) ]
     end
 
-    tr_ge=[[P2PP(1*tr_ge[x][1]),tr_ge[x][2]] for x in 1:length(tr_ge)]
     if tr_ge!=0
+        tr_ge=[[P2PP(1*tr_ge[x][1]),tr_ge[x][2]] for x in 1:length(tr_ge)]
         [@constraint(model, sum(Γ[m]*tr_ge[x][1][m] for m in mons_p) >= tr_ge[x][2]) for x in 1:length(tr_ge) ]
     end
 
