@@ -300,7 +300,7 @@ function npa_general( obj, level;
                     verbose = false,
                     termination = false)
                         
-    ops = ops_at_level(Polynomial.(vcat([obj, op_ge, op_eq],[tr_ge[i][1] for i in 1:length(tr_ge)], [tr_eq[i][1] for i in 1:length(tr_eq)])), level)
+    ops = ops_at_level(Polynomial.(vcat([obj, op_ge..., op_eq...],[tr_ge[i][1] for i in 1:length(tr_ge)], [tr_eq[i][1] for i in 1:length(tr_eq)])), level)
     pol = 1+sum(op_ge)+sum(op_eq)
     deg = Int(ceil(degree(pol)/2))
     ops_add = ops_at_level([op_ge,op_eq], deg)
