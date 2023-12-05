@@ -130,7 +130,7 @@ function Base.conj(m::Monomial,cyclic::Bool)
                          for (party, ops) in m]))
     end
 end
-
+Base.conj(x::Int64,cyclic::Bool)    = x
 function reorderMonomial(m::Monomial)
     monArr=[Monomial([o]) for o in m.word]
     if length(m)<=1
