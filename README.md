@@ -25,5 +25,5 @@ ge_constr = [[-σ,-G]]
 eq_constr = [[ρ[x],1] for x in 1:3]
 wit = -(2*PB[1,1]-1)*ρ[1]-(2*PB[1,2]-1)*ρ[1]-(2*PB[1,1]-1)*ρ[2]+(2*PB[1,2]-1)*ρ[2]+(2*PB[1,1]-1)*ρ[3]
 level = 1
-npa_general(-wit, level; ge, eq_constr, ge_constr)
+npa_general(-wit, level; op_ge=ge, tr_eq=eq_constr, tr_ge=ge_constr)
 ```
