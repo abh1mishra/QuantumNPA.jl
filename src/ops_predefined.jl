@@ -107,7 +107,7 @@ function projector(party, output::IndexRange, input::IndexRange;
         ps = [projector(party, o, i) for o in outputs, i in input]
         pl = reshape([Polynomial(Id) for _ in input], 1, length(input))
 
-        for i in input
+        for i in 1:length(input)
             for p in ps[:,i]
                 pl[i][p] = -1
             end
