@@ -13,7 +13,7 @@ Then to use or try out:
 include("qnpa.jl");
 ```
 
-# Example from arXiv:2007.16145 (Fig. 3 blue line)
+# Example from arXiv:2007.16145 (Fig. 3 red line)
 
 ```
 G=0.6
