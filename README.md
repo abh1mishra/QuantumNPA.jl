@@ -22,7 +22,6 @@ G=0.8  # value of the guessing probability
 ρ = projector([1], 1, 1:3)
 PA = projector([1], 1:2, 4:5, full=true)
 ge = [σ-1/3*ρ[i] for i in 1:3]
-eq = [PA[1,y]+PA[2,y]-Id for y in 1:2]
 ge_constr = [[-σ,-G]]
 eq_constr = [[ρ[x],1] for x in 1:3]
 wit = -(2*PA[1,1]-1)*ρ[1]-(2*PA[1,2]-1)*ρ[1]-(2*PA[1,1]-1)*ρ[2]+(2*PA[1,2]-1)*ρ[2]+(2*PA[1,1]-1)*ρ[3]
@@ -39,7 +38,6 @@ PA = projector([1], 1:2, 4:5, full=true)
 ge = [σ-1/3*ρ[i] for i in 1:3]
 ge_add = [ρ[i]-ρ[i]^2 for i in 1:3]
 ge=vcat(ge,ge_add)
-eq = [PA[1,y]+PA[2,y]-Id for y in 1:2]
 ge_constr = [[-σ,-G]]
 eq_constr = [[ρ[x],1] for x in 1:3]
 wit = -(2*PA[1,1]-1)*ρ[1]-(2*PA[1,2]-1)*ρ[1]-(2*PA[1,1]-1)*ρ[2]+(2*PA[1,2]-1)*ρ[2]+(2*PA[1,1]-1)*ρ[3]
