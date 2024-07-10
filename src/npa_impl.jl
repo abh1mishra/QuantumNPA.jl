@@ -291,21 +291,37 @@ and it refers to the level of the localizing matrices. The words can
 be defined commuting or non commuting.
 """
 
-function npa_general( obj, level; 
-                    op_eq = 0, 
-                    op_ge = 0,
-                    tr_eq = 0,
-                    tr_ge = 0,
-                    show_moments = false,
-                    verbose = false,
-                    termination = false)
-                        
+function get_monomials(obj, level; 
+                        op_eq = 0, 
+                        op_ge = 0,
+                        tr_eq = 0,
+                        tr_ge = 0)
+    # for a given level of the localising moment matrices, it returns the operators at that level and the ones of the principal moment matix (which will be larger)
     ops = ops_at_level(Polynomial.(vcat([obj, op_ge..., op_eq...],[tr_ge[i][1] for i in 1:length(tr_ge)], [tr_eq[i][1] for i in 1:length(tr_eq)])), level)
     pol = 1+sum(op_ge)+sum(op_eq)
     deg = Int(ceil(degree(pol)/2))
     ops_add = ops_at_level([op_ge,op_eq], deg)
     ops_principal = unique([ops_add[o]*ops[p] 
                             for o in 1:length(ops_add) for p in 1:length(ops)])
+    return ops, ops_principal
+end
+
+function npa_general( obj, level;
+                    op_eq = 0, 
+                    op_ge = 0,
+                    tr_eq = 0,
+                    tr_ge = 0,
+                    show_moments = false,
+                    verbose = false,
+                    termination = false,
+                    level_principal=0)
+                        
+    if level_principal==0
+            ops, ops_principal = get_monomials(obj,level; op_eq = op_eq, op_ge = op_ge, tr_eq = tr_eq, tr_ge = tr_ge)
+        else
+            ops_principal = ops_at_level(Polynomial.(vcat([obj, op_ge..., op_eq...],[tr_ge[i][1] for i in 1:length(tr_ge)], [tr_eq[i][1] for i in 1:length(tr_eq)])), level)
+            ops = ops_at_level(Polynomial.(vcat([obj, op_ge..., op_eq...],[tr_ge[i][1] for i in 1:length(tr_ge)], [tr_eq[i][1] for i in 1:length(tr_eq)])), level_principal)
+    end
 
     model = Model(Mosek.Optimizer)
 
