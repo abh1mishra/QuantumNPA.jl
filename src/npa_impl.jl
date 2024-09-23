@@ -1,4 +1,5 @@
-Moments = Dict{PMonomial}{BlockDiagonal}
+PMoments = Dict{PMonomial}{BlockDiagonal}
+Moments = Dict{Monomial}{BlockDiagonal}
 
 function sparse_sym_add!(matrix, i, j, val)
     matrix[i, j] += val
@@ -46,6 +47,27 @@ end
 #     return block
 # end
 
+function npa_moments_block(operators,cPoly)
+    N = length(operators)
+    iops = collect(enumerate(operators))
+    block = Dict{Monomial,SparseMatrixCSC}()
+
+    for (i, x) in iops
+        for (j, y) in iops[i:end]
+            p = Polynomial(conj(x,false)*cPoly*y)
+            for (c, m) in p
+                if !haskey(block, m)
+                    block[m] = sparse_sym(N, i, j, c)
+                else
+                    sparse_sym_add!(block[m], i, j, c)
+                end
+            end
+        end
+    end
+
+    return block
+end
+
 function cyclic_npa_moments_block(operators,cPoly)
     N = length(operators)
     iops = collect(enumerate(operators))
@@ -88,33 +110,33 @@ principal moment matrix. When one includes a polynomial in the second
 argument, the ouput will be the localizing moment matrix of the 
 polynomial specified.
 """
-# function npa_moments(operators)
-#     if isempty(operators)
-#         return moments
-#     end
+function npa_moments(operators,cPoly=Id)
+    if isempty(operators)
+        return moments
+    end
 
-#     if first(operators) isa Union{Number,PMonomial,Polynomial}
-#         operators = [operators]
-#     end
+    if first(operators) isa Union{Number,PMonomial,Polynomial,Monomial}
+        operators = [operators]
+    end
 
-#     nblocks = length(operators)
-#     bsizes = length.(operators)
-#     blocks = npa_moments_block.(operators,true)
-#     ms = monomials(keys(block) for block in blocks)
+    nblocks = length(operators)
+    bsizes = length.(operators)
+    blocks = [npa_moments_block(i,cPoly) for i in operators]
+    ms = monomials(keys(block) for block in blocks)
 
-#     moments = Moments()
+    moments = Moments()
 
-#     for m in ms
-#         blocks_m = [(haskey(block, m)
-#                      ? block[m]
-#                      : (n -> spzeros(n, n))(bsizes[b]))
-#                     for (b, block) in enumerate(blocks)]
+    for m in ms
+        blocks_m = [(haskey(block, m)
+                     ? block[m]
+                     : (n -> spzeros(n, n))(bsizes[b]))
+                    for (b, block) in enumerate(blocks)]
 
-#         moments[m] = BlockDiagonal(blocks_m)
-#     end
+        moments[m] = BlockDiagonal(blocks_m)
+    end
 
-#     return moments
-# end
+    return moments
+end
 
 function cyclic_npa_moments(operators, cPoly=Id)
     if isempty(operators)
@@ -130,7 +152,7 @@ function cyclic_npa_moments(operators, cPoly=Id)
     blocks = [cyclic_npa_moments_block(i,cPoly) for i in operators]
     ms = monomials(keys(block) for block in blocks)
 
-    moments = Moments()
+    Pmoments = PMoments()
 
     for m in ms
         blocks_m = [(haskey(block, m)
@@ -138,10 +160,10 @@ function cyclic_npa_moments(operators, cPoly=Id)
                      : (n -> spzeros(n, n))(bsizes[b]))
                     for (b, block) in enumerate(blocks)]
 
-        moments[m] = BlockDiagonal(blocks_m)
+        Pmoments[m] = BlockDiagonal(blocks_m)
     end
 
-    return moments
+    return Pmoments
 end
 
 

@@ -25,6 +25,8 @@ include("ops_misc.jl")
 # supporting functions.
 include("ops_monomial.jl")
 
+include("ops_pmonomial.jl")
+
 # Definition of polynomials (linear combinations of monomials multiplied by
 # coefficients) and supporting functions.
 include("ops_polynomial.jl")

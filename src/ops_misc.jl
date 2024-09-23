@@ -43,7 +43,7 @@ function party_num(s::AbstractString)
         end
         push!(subsArr,party)
     end
-    return subsArr
+    return length(subsArr)==1 ? subsArr[1] : subsArr
 end
 
 party_num(c::Char) = [pos(c)]

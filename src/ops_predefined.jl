@@ -1,4 +1,6 @@
-@operator Freeop(input::Integer) ("O$party$input", "/$input")
+@operator Freeop(input::Integer,conj::Bool) ("O$party$input$conj", "/$input$conj")
+
+@operator Hermitian(input::Integer) ("H$party$input", "/$input")
 
 @operator Dichotomic(input::Integer) ("$party$input", "/$input")
 
@@ -23,7 +25,41 @@ macro dichotomic(expr...)
     return quote $(exprs...) end
 end
 
+function parse_hermitian(expr)
+    if expr isa Symbol
+        (party, input) = split_party(expr)
+        name = Symbol(party)
+        return :($(esc(expr)) = hermitian($party, $(parse(Int, input))))
+    else
+        name = expr.args[1]
+        range = expr.args[2]
+        return :($(esc(name)) = hermitian($(QuoteNode(name)), $range))
+    end
+end
 
+macro hermitian(expr...)
+    exprs = map(parse_hermitian, expr)
+    return quote $(exprs...) end
+end
+
+function parse_freeop(expr)
+    if expr isa Symbol
+        (party, input) = split_party(expr)
+        name = Symbol(party)
+        return :($(esc(expr)) = freeop($party, $(parse(Int, input)),false))
+    else
+        name = expr.args[1]
+        range = expr.args[2]
+        return :($(esc(name)) = freeop($(QuoteNode(name)), $range,false))
+    end
+end
+
+macro freeop(expr...)
+    exprs = map(parse_freeop, expr)
+    return quote $(exprs...) end
+end
+
+Base.conj(x::Freeop) = Freeop(x.input,!x.conj)
 
 @operator(Fourier(input::Integer, power::Integer, d::Integer),
           "$party$input^$power",
