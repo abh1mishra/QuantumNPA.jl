@@ -119,36 +119,6 @@ Base.zero(m::Monomial) = 0
 
 
 
-conj_min(x::Number) = real(x)
-
-function conj_min(m::Monomial,cyclic::Bool)
-    if m==Id
-        return m
-    end
-    if !cyclic
-        return min(m, conj(m))
-    else
-        monCycles=opcycles(flatMonomial(m).word,true)
-        #=
-
-
-        Need to put conjugate of operators in conjMonCycles, now not necessary as dealing with projectors
-
-
-        =#
-        conjMonCycles=opcycles(reverse!(flatMonomial(m).word),true)
-        # println(monCycles)
-        # println(conjMonCycles)
-        return ((monCycles==0) | (conjMonCycles==0)) ? 0 : min(vcat(monCycles,conjMonCycles)...)
-    end
-end
-
-# function cyclic_conj_min(m::Monomial)
-#
-# end
-
-
-
 """
 Concatenate two monomials. This is used later to decide what the result
 of multiplying two monomials is.
@@ -208,42 +178,6 @@ function join_monomials(x::Monomial, y::Monomial)
     return (coeff == 1) ? m : (coeff, m)
 
 end
-
-
-
-#             # if px < py
-#             #     push!(word, x.word[j])
-#             #     j += 1
-#             # elseif py < px
-#             #     push!(word, y.word[k])
-#             #     k += 1
-#             else
-#                 (c, ops) = join_ops(opsx, opsy)
-#
-#                 if c == 0
-#                     return 0
-#                 end
-#
-#                 coeff *= c
-#
-#                 if !isempty(ops)
-#                     push!(word, (px, ops))
-#                 end
-#
-#                 j += 1
-#                 k += 1
-#             end
-#
-#     end
-#
-#     append!(word, x.word[j:end])
-#     append!(word, y.word[k:end])
-#
-#     m = Monomial(word)
-#
-#     return (coeff == 1) ? m : (coeff, m)
-# end
-
 
 
 function ctrace(m::Monomial)

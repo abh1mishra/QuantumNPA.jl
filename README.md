@@ -12,13 +12,20 @@ Then to use or try out:
 ```julia
 include("qnpa.jl");
 ```
+Added support for free operators and hermitian operators. 
+Define free operators and hermitian as follows
+```
+freeop(parties,input,conjugate)
+# parties is a vector of integers specifyin the systems, conjugate takes boolean values.
 
+hermitian(parties,input)
+```
 # Example from arXiv:2007.16145 (Fig. 3 red and blue lines)
 
 Let us start computing a point from the plot with pure states (red line)
 ```
 G=0.8  # value of the guessing probability
-σ = freeop([1],1)
+σ = hermitian([1],1)
 ρ = projector([1], 1, 1:3)
 PA = projector([1], 1:2, 4:5, full=true)
 ge = [σ-1/3*ρ[i] for i in 1:3]

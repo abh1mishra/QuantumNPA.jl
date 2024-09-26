@@ -21,6 +21,38 @@ function sparse_sym(N, i, j, val)
     end
 end
 
+function SparseArrays.dropzeros!(matrix::BlockDiagonal)
+    for blk in blocks(matrix)
+        dropzeros!(blk)
+    end
+
+    return matrix
+end
+
+sp1x1(x) = (iszero(x)
+            ? spzeros(Float64, 1, 1)
+            : SparseMatrixCSC{Float64,Int}(sparse([1], [1], x)))
+
+
+
+
+
+function bspzeros(bsizes)
+    return BlockDiagonal([spzeros(n, n) for n in bsizes])
+end
+
+function Base.zero(bm::BlockDiagonal)
+    return bspzeros(first.(blocksizes(bm)))
+end
+
+function BlockDiagonals.blocksizes(moments::Moments)
+    if isempty(moments)
+        return []
+    else
+        return first.(blocksizes(first(moments)[2]))
+    end
+end
+
 
 function npa_moments_block(operators,cPoly)
     N = length(operators)
@@ -113,6 +145,26 @@ function npa_moments(operators,cPoly=Id)
     return moments
 end
 
+"""
+Construct the NPA moment matrix for tracial hierarchy.
+
+The argument operators can in general be an array of arrays of operators
+(blocks), e.g. [[Id], [A1 + B1], [A1 - B1]]. It can also be a simple array of
+operators, in which case it is treated the same as an array containing a
+single array of operators, e.g., [[Id, A1, A2]]). In either case the return
+value is a dictionary with:
+
+  * as keys: monomials obtained by multiplying operators in the same blocks
+    together.
+
+  * as values: block-diagonal sparse matrices with coefficients obtained
+    from multiplying the input operators together.
+
+When the second argument is not specified, the function will build a 
+principal moment matrix. When one includes a polynomial in the second 
+argument, the ouput will be the localizing moment matrix of the 
+polynomial specified.
+"""
 function cyclic_npa_moments(operators, cPoly=Id)
     if isempty(operators)
         return moments
@@ -156,129 +208,6 @@ function cyclic_pol_moments(Op::Polynomial, operators)
 end
 
 
-function SparseArrays.dropzeros!(matrix::BlockDiagonal)
-    for blk in blocks(matrix)
-        dropzeros!(blk)
-    end
-
-    return matrix
-end
-
-sp1x1(x) = (iszero(x)
-            ? spzeros(Float64, 1, 1)
-            : SparseMatrixCSC{Float64,Int}(sparse([1], [1], x)))
-
-"""
-Generate the NPA relaxation for a given quantum optimisation problem (an
-operator expr whose expectation we want to maximise with the expectation
-values of the operators constraints set to zero).
-"""
-function npa2sdp(expr,
-                 level_or_moments;
-                 eq=[],
-                 ge=[])
-    if level_or_moments isa Moments
-        moments = level_or_moments
-    else
-        moments = npa_moments(ops_at_level([expr, eq, ge],
-                                           level_or_moments))
-    end
-
-    # Reduce constraints to canonical form
-    expr = conj_min(expr,true)
-    for i in enumerate(eq)
-        eq[i[1]]=conj_min(eq[i[1]],true)
-    end
-    for i in enumerate(ge)
-        ge[i[1]]=conj_min(ge[i[1]],true)
-    end
-    eq = linspace(eq)
-
-    if haskey(eq, Id)
-        @error "Contradiction Id = 0 in equality constraints."
-    end
-
-    # Reduce the objective expression, using constraints to eliminate
-    # monomials
-    expr = reduce_expr(expr, eq)
-    moments = deepcopy(moments)
-
-    # Reduce moments using equality constraints.
-    for (m0, constraint) in eq
-        constraint = copy(constraint)
-        q = constraint[m0]
-        constraint[m0] = 0
-
-        moment0 = moments[m0]
-        delete!(moments, m0)
-
-        for (c, m) in constraint
-            moments[m] -= rdiv(c, q) * moment0
-        end
-    end
-
-    # Reduce inequality constraints then absorb them into the moment matrix.
-    # Basically, take the coefficients in the inequalities and add them as
-    # 1x1 blocks to the moments.
-    ge = [reduce_expr(ineq, eq) for ineq in ge]
-
-    for (m, moment) in moments
-        append!(blocks(moment),
-                [sp1x1(ineq[m]) for ineq in ge])
-    end
-
-    # Remove any zero coefficients that might be stored explicitly in the
-    # sparse matrices in the blocks.
-    # for matrix in values(moments)
-    #    dropzeros!(matrix)
-    # end
-
-    moments = Moments(m => mat
-                      for (m, mat) in moments
-                          if !iszero(mat))
-
-    return (expr, moments)
-end
-
-
-
-function bspzeros(bsizes)
-    return BlockDiagonal([spzeros(n, n) for n in bsizes])
-end
-
-function Base.zero(bm::BlockDiagonal)
-    return bspzeros(first.(blocksizes(bm)))
-end
-
-function BlockDiagonals.blocksizes(moments::Moments)
-    if isempty(moments)
-        return []
-    else
-        return first.(blocksizes(first(moments)[2]))
-    end
-end
-
-
-
-if !@isdefined(default_solver)
-    default_solver = SCS.Optimizer
-end
-
-function set_solver!(solver)
-    global default_solver = solver
-end
-
-function set_verbosity!(model, verbose)
-    if !isnothing(verbose)
-        (!verbose ? set_silent : unset_silent)(model)
-    end
-end
-
-
-
-function expr2objective(expr, vars)
-    return expr[Id] + sum(c*vars[m] for (c, m) in expr if m != Id)
-end
 
 
 """
@@ -303,6 +232,58 @@ function get_monomials(obj, level;
     return ops, ops_principal
 end
 
+
+"""
+    npa_general(obj, level; op_eq=0, op_ge=0, tr_eq=0, tr_ge=0, show_moments=false, verbose=false, termination=false, level_principal=0)
+
+This function performs a Noncommutative Polynomial Algebra (NPA) hierarchy optimization using the Mosek optimizer. It constructs and solves a semidefinite programming (SDP) problem based on the provided polynomial constraints and objectives.
+
+# Arguments
+- `obj`: The objective polynomial to be minimized.
+- `level`: The level of the NPA hierarchy.
+- `op_eq`: A list of operator equality constraints. Default is 0.
+- `op_ge`: A list of operator inequality constraints (greater than or equal to). Default is 0.
+- `tr_eq`: A list of trace equality constraints. Default is 0.
+- `tr_ge`: A list of trace inequality constraints (greater than or equal to). Default is 0.
+- `show_moments`: A boolean flag indicating whether to return the moments. Default is false.
+- `verbose`: A boolean flag indicating whether to print detailed solver output. Default is false.
+- `termination`: A boolean flag indicating whether to return the termination status. Default is false.
+- `level_principal`: The level of the principal operators in the NPA hierarchy. Default is 0.
+
+# Returns
+- If `show_moments` is false:
+    - If `termination` is true: Returns a tuple `(objective_value, termination_status)`.
+    - Otherwise: Returns `objective_value`.
+- If `show_moments` is true:
+    - If `op_ge` is 0:
+        - If `termination` is true: Returns a tuple `(objective_value, moments_sum, termination_status)`.
+        - Otherwise: Returns a tuple `(objective_value, moments_sum)`.
+    - If `op_ge` is not 0:
+        - If `termination` is true: Returns a tuple `(objective_value, moments_sum, moments_ge_sum, termination_status)`.
+        - Otherwise: Returns a tuple `(objective_value, moments_sum, moments_ge_sum)`.
+# Details
+The function first determines the monomials and principal operators based on the level_principal parameter.
+It then creates a model using the Mosek optimizer.
+Moments and monomials for the principal operators are generated.
+The function defines the variable Γ in the model.
+A PSD constraint is added for the principal moments.
+Constraints for tr_eq and tr_ge are added if they are not 0.
+Constraints for op_eq and op_ge are added if they are not 0.
+The objective function is defined.
+The model is set to silent if verbose is false.
+The model is optimized.
+The termination status is printed.
+The function returns the objective value and optionally the moments and termination status based on the flags show_moments and termination.
+# Example
+```julia
+obj = Polynomial(...)
+level = 2
+op_eq = [...]
+op_ge = [...]
+tr_eq = [...]
+tr_ge = [...]
+result = npa_general(obj, level; op_eq=op_eq, op_ge=op_ge, tr_eq=tr_eq, tr_ge=tr_ge, show_moments=true, verbose=true, termination=true)
+"""
 function npa_general( obj, level;
                     op_eq = 0, 
                     op_ge = 0,
