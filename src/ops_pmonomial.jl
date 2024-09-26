@@ -12,15 +12,7 @@ PMonomial(party, operator::Operator) = PMonomial(party_num(party), operator)
 PId = PMonomial(Dict{Int64,Array{Tuple{Array{Int64,1},Array{Operator,1}},1}}())
 
 isidentity(m::PMonomial) = isempty(m.pword)
-
-
-Base.iterate(m::PMonomial) = iterate(m.word)
-Base.iterate(m::PMonomial, state) = iterate(m.word, state)
-
-Base.length(m::PMonomial) = length(m.word)
-
-Base.hash(pm::PMonomial, h::UInt) = hash(pm.pword, h)
-
+Base.hash(pm::PMonomial, h::UInt) = hash(length(pm.pword), h)
 
 function Base.show(io::IO, x::PMonomial)
     if isidentity(x)
@@ -35,81 +27,7 @@ function Base.show(io::IO, x::PMonomial)
     end
 end
 
-
-
-
-
-function Base.conj(m::Monomial,cyclic::Bool)
-    if cyclic
-        # can simplify conj for subsystems by doing
-        return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
-                     for (party, ops) in reverse(m.word)]))
-    else
-        return Monomial( reverse!([(party, reverse!([conj(op) for op in ops]))
-                         for (party, ops) in m]))
-    end
-end
-Base.conj(x::Int64,cyclic::Bool)    = x
-
-function reorderMonomial(m::Monomial)
-    monArr=[Monomial([o]) for o in m.word]
-    if length(m)<=1
-        return m
-    end
-    return *(monArr...)
-
-end
-
-function Base.adjoint(m::Monomial)
-    return Monomial([(party, reverse!([adjoint(op) for op in ops]))
-                     for (party, ops) in m])
-end
-
-Base.zero(m::Monomial) = 0
-
-
-
-conj_min(x::Number) = real(x)
-
-function conj_min(m::Monomial,cyclic::Bool)
-    if m==Id
-        return m
-    end
-    if !cyclic
-        return min(m, conj(m))
-    else
-        monCycles=opcycles(flatMonomial(m).word,true)
-        #=
-
-
-        Need to put conjugate of operators in conjMonCycles, now not necessary as dealing with projectors
-
-
-        =#
-        conjMonCycles=opcycles(reverse!(flatMonomial(m).word),true)
-        # println(monCycles)
-        # println(conjMonCycles)
-        return ((monCycles==0) | (conjMonCycles==0)) ? 0 : min(vcat(monCycles,conjMonCycles)...)
-    end
-end
-
-# function cyclic_conj_min(m::Monomial)
-#
-# end
-
-
-
-
-
-
-
-
-
-function flatMonomial(m::Monomial)
-    return Monomial([(s,[ops]) for (s,opsArr) in m for ops in opsArr ])
-end
-
-
+M2PM(x::Int64)=x
 function M2PM(m::Monomial)
     a=PMonomial(Dict())
     m=flatMonomial(m)

@@ -37,6 +37,8 @@ function Base.show(io::IO, m::Monomial)
 end
 
 
+
+
 degree(x::Number) = !iszero(x) ? 0 : -Inf
 
 function degree(m::Monomial)
@@ -87,20 +89,31 @@ end
 
 
 
-# function Base.conj(m::Monomial)
-#     return
-# end
 
-# function Base.conj(m::Monomial,cyclic::Bool)
-#     if cyclic
-#         # can simplify conj for subsystems by doing
-#         return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
-#                      for (party, ops) in reverse(m.word)]))
-#     else
-#         return Monomial([(party, reverse!([conj(op) for op in ops]))
-#                          for (party, ops) in m])
-#     end
-# end
+function Base.conj(m::Monomial,cyclic::Bool)
+    if cyclic
+        # can simplify conj for subsystems by doing
+        return reorderMonomial(Monomial([(party, reverse!([conj(op) for op in ops]))
+                     for (party, ops) in reverse(m.word)]))
+    else
+        return Monomial( reverse!([(party, reverse!([conj(op) for op in ops]))
+                         for (party, ops) in m]))
+    end
+end
+Base.conj(x::Int64,cyclic::Bool)    = x
+function reorderMonomial(m::Monomial)
+    monArr=[Monomial([o]) for o in m.word]
+    if length(m)<=1
+        return m
+    end
+    return *(monArr...)
+
+end
+
+function Base.adjoint(m::Monomial)
+    return Monomial([(party, reverse!([adjoint(op) for op in ops]))
+                     for (party, ops) in m])
+end
 
 Base.zero(m::Monomial) = 0
 
@@ -108,7 +121,31 @@ Base.zero(m::Monomial) = 0
 
 conj_min(x::Number) = real(x)
 
+function conj_min(m::Monomial,cyclic::Bool)
+    if m==Id
+        return m
+    end
+    if !cyclic
+        return min(m, conj(m))
+    else
+        monCycles=opcycles(flatMonomial(m).word,true)
+        #=
 
+
+        Need to put conjugate of operators in conjMonCycles, now not necessary as dealing with projectors
+
+
+        =#
+        conjMonCycles=opcycles(reverse!(flatMonomial(m).word),true)
+        # println(monCycles)
+        # println(conjMonCycles)
+        return ((monCycles==0) | (conjMonCycles==0)) ? 0 : min(vcat(monCycles,conjMonCycles)...)
+    end
+end
+
+# function cyclic_conj_min(m::Monomial)
+#
+# end
 
 
 
@@ -226,3 +263,4 @@ end
 function flatMonomial(m::Monomial)
     return Monomial([(s,[ops]) for (s,opsArr) in m for ops in opsArr ])
 end
+

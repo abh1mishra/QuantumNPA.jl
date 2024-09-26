@@ -61,6 +61,7 @@ end
 
 Base.conj(x::Freeop) = Freeop(x.input,!x.conj)
 
+
 @operator(Fourier(input::Integer, power::Integer, d::Integer),
           "$party$input^$power",
           false,

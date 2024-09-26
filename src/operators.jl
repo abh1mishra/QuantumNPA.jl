@@ -24,7 +24,6 @@ include("ops_misc.jl")
 # Definition of monomials (products of operators divided into parties) and
 # supporting functions.
 include("ops_monomial.jl")
-
 include("ops_pmonomial.jl")
 
 # Definition of polynomials (linear combinations of monomials multiplied by

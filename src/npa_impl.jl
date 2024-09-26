@@ -21,31 +21,6 @@ function sparse_sym(N, i, j, val)
     end
 end
 
-# function npa_moments_block(operators,cyclic::Bool)
-#     N = length(operators)
-#     iops = collect(enumerate(operators))
-#     # println(typiops)
-#     block = Dict{Monomial,SparseMatrixCSC}()
-
-#     for (i, x) in iops
-#         for (j, y) in iops[i:end]
-
-#             p = (cyclic) ? Polynomial(conj_min(conj(x,true)*y,true)) : Polynomial(conj_min(conj(x)*y))
-#             if(p==0)
-#                 continue
-#             end
-#             for (c, m) in p
-#                 if !haskey(block, m)
-#                     block[m] = sparse_sym(N, i, j, c)
-#                 else
-#                     sparse_sym_add!(block[m], i, j, c)
-#                 end
-#             end
-#         end
-#     end
-
-#     return block
-# end
 
 function npa_moments_block(operators,cPoly)
     N = length(operators)
