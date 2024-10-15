@@ -372,3 +372,122 @@ function npa_general( obj, level;
         end
     end
 end
+
+function npa_model(level; obj=0,
+
+    op_eq = 0, 
+ 
+    op_ge = 0,
+ 
+    tr_eq = 0,
+ 
+    tr_ge = 0,
+ 
+    add_ops=0)
+ 
+ 
+    println("obj:",obj,"\nop_eq:",op_eq,"\nop_ge:",op_ge,"\ntr_eq:",tr_eq,"\ntr_ge:",tr_ge)
+    print(vcat([obj, op_ge..., op_eq..., add_ops...],[tr_ge[i][1] for i in 1:length(tr_ge)], [tr_eq[i][1] for i in 1:length(tr_eq)]))
+    ops = ops_at_level(Polynomial.(vcat([obj, op_ge..., op_eq..., add_ops...],[tr_ge[i][1] for i in 1:length(tr_ge)], [tr_eq[i][1] for i in 1:length(tr_eq)])), level)
+ 
+    pol = 1+sum(op_ge)+sum(op_eq)
+ 
+    deg = Int(ceil(degree(pol)/2))
+ 
+    ops_add = ops_at_level([op_ge,op_eq], deg)
+ 
+    ops_principal = unique([ops_add[o]*ops[p] 
+ 
+                for o in 1:length(ops_add) for p in 1:length(ops)])
+    
+    println(length(ops_principal))
+ 
+ 
+ 
+ 
+    model = Model(Mosek.Optimizer)
+ 
+ 
+ 
+ 
+    moments_p = cyclic_npa_moments(ops_principal)
+ 
+    mons_p = keys(moments_p)
+    @variable(model, Γ[mons_p])
+ 
+    @constraint(model,
+ 
+    sum(Γ[m].*moments_p[m] for m in mons_p) >= 0,
+ 
+    PSDCone())
+    
+ 
+ 
+    if tr_eq!=0
+ 
+        tr_eq=[[P2PP(1*tr_eq[x][1]),tr_eq[x][2]] for x in 1:length(tr_eq)]
+    
+        [@constraint(model, sum(Γ[m]*tr_eq[x][1][m] for m in mons_p) == tr_eq[x][2]) for x in 1:length(tr_eq) ]
+    
+    end
+ 
+ 
+ 
+ 
+    if tr_ge!=0
+ 
+        tr_ge=[[P2PP(1*tr_ge[x][1]),tr_ge[x][2]] for x in 1:length(tr_ge)]
+    
+        [@constraint(model, sum(Γ[m]*tr_ge[x][1][m] for m in mons_p) >= tr_ge[x][2]) for x in 1:length(tr_ge) ]
+ 
+    end
+ 
+ 
+ 
+ 
+    if op_eq!=0
+ 
+        moments_eq = [cyclic_npa_moments(ops,op_eq[x]) for x in 1:length(op_eq)]
+    
+        mons_eq = [keys(moments_eq[x]) for x in 1:length(op_eq)]
+    
+    
+    
+    
+        [@constraint(model,
+    
+        sum(Γ[m].*moments_eq[x][m] for m in mons_eq[x]) .== 0,
+    
+        PSDCone()) for x in 1:length(op_eq)]
+    
+    
+    end
+ 
+    if op_ge!=0
+ 
+        moments_ge = [cyclic_npa_moments(ops,op_ge[x]) for x in 1:length(op_ge)]
+    
+        mons_ge = [keys(moments_ge[x]) for x in 1:length(op_ge)]
+    
+    
+    
+    
+        [@constraint(model,
+    
+            sum(Γ[m].*moments_ge[x][m] for m in mons_ge[x]) >= 0,
+    
+            PSDCone()) for x in 1:length(op_ge)]
+ 
+    end
+ 
+    if obj!=0
+ 
+        obj=P2PP(obj)
+ 
+        @objective(model, Min, sum(obj[m]*Γ[m] for m in mons_p))
+ 
+    end
+    
+    return model, Γ, mons_p, moments_p
+ 
+ end

@@ -18,11 +18,8 @@ function Base.show(io::IO, x::PMonomial)
     if isidentity(x)
         print(io, "Id")
     else
-        for (key,value) in x.pword
-            print(io,key,"-->")
-            for i in value
-                print(io,Monomial(i[1],i[2]...)," ")
-            end
+        for k in sort(collect(keys(x.pword)))
+            print(io,"_(",Monomial(x.pword[k]),")_")
         end
     end
 end
