@@ -26,6 +26,7 @@ end
 
 M2PM(x::Int64)=x
 function M2PM(m::Monomial)
+    m=min(m,conj(m,false))
     a=PMonomial(Dict())
     m=flatMonomial(m)
     for i in m.word

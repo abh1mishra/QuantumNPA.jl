@@ -84,14 +84,11 @@ function cyclic_npa_moments_block(operators,cPoly)
             p = Polynomial(conj(x,false)*cPoly*y)
             for (c, m) in p
                 pm=M2PM(m)
-                pm_=M2PM(conj(m,false))
                 pmk=haskey(block, pm)
-                pmk_=haskey(block, pm_)
-                if !(pmk || pmk_)
-                    block[M2PM(m)] = sparse_sym(N, i, j, c)
+                if !pmk
+                    block[pm] = sparse_sym(N, i, j, c)
                 else
-                    old_m=pmk ? pm : pm_
-                    sparse_sym_add!(block[old_m], i, j, c)
+                    sparse_sym_add!(block[pm], i, j, c)
                 end
             end
         end
@@ -344,7 +341,7 @@ function npa_general( obj, level;
                     PSDCone()) for x in 1:length(op_ge)]
     end
     obj=P2PP(obj)
-    @objective(model, Max, sum(c*Γ[m] for (c,m) in obj))
+    @objective(model, Min, sum(c*Γ[m] for (c,m) in obj))
     if !verbose
         set_silent(model)
     end
