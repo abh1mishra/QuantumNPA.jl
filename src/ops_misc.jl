@@ -34,7 +34,7 @@ pos(c::Char) = findfirst(isequal(c), alphabet)
 
 "Return integer representation of a party, e.g., `party_num(\"C\") = 3`."
 function party_num(s::AbstractString)
-    subsArr=[]
+    subsArr=Vector{Int64}([])
     base = length(alphabet)
     for subs in split(s,',')
         party = 0

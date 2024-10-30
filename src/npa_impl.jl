@@ -79,15 +79,19 @@ function cyclic_npa_moments_block(operators,cPoly)
     N = length(operators)
     iops = collect(enumerate(operators))
     block = Dict{PMonomial,SparseMatrixCSC}()
-
     for (i, x) in iops
         for (j, y) in iops[i:end]
             p = Polynomial(conj(x,false)*cPoly*y)
             for (c, m) in p
-                if !haskey(block, M2PM(m))
+                pm=M2PM(m)
+                pm_=M2PM(conj(m,false))
+                pmk=haskey(block, pm)
+                pmk_=haskey(block, pm_)
+                if !(pmk || pmk_)
                     block[M2PM(m)] = sparse_sym(N, i, j, c)
                 else
-                    sparse_sym_add!(block[M2PM(m)], i, j, c)
+                    old_m=pmk ? pm : pm_
+                    sparse_sym_add!(block[old_m], i, j, c)
                 end
             end
         end
@@ -302,9 +306,9 @@ function npa_general( obj, level;
     end
 
     model = Model(Mosek.Optimizer)
-
     moments_p = cyclic_npa_moments(ops_principal)
     mons_p = keys(moments_p)
+    # return ops_principal,mons_p
     @variable(model, Γ[mons_p])
     @constraint(model,
                 sum(Γ[m].*moments_p[m] for m in mons_p) >= 0,
@@ -335,19 +339,17 @@ function npa_general( obj, level;
     if op_ge!=0
         moments_ge = [cyclic_npa_moments(ops,op_ge[x]) for x in 1:length(op_ge)]
         mons_ge = [keys(moments_ge[x]) for x in 1:length(op_ge)]
-    
         [@constraint(model,
                     sum(Γ[m].*moments_ge[x][m] for m in mons_ge[x]) >= 0,
                     PSDCone()) for x in 1:length(op_ge)]
     end
     obj=P2PP(obj)
-    @objective(model, Min, sum(obj[m]*Γ[m] for m in mons_p))
+    @objective(model, Max, sum(c*Γ[m] for (c,m) in obj))
     if !verbose
         set_silent(model)
     end
     optimize!(model)
-    println(termination_status(model))
-
+    println(termination_status(model),objective_value(model),"\n")
     if show_moments==false
         if termination==true
             return objective_value(model), termination_status(model)
@@ -491,3 +493,6 @@ function npa_model(level; obj=0,
     return model, Γ, mons_p, moments_p
  
  end
+function npa2sdp(pMatrix,lMatrixArray)
+
+end

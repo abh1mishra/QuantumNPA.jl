@@ -136,6 +136,10 @@ function join_monomials(x::Monomial, y::Monomial)
     end
     word=deepcopy(x.word)
     for (py,opsy) in y.word
+        if isempty(word)
+            insert!(word,1,(py,opsy))
+            continue
+        end
         for j in length(word):-1:1
             (px,opsx)=word[j]
             if (intersect(py,px)==Int64[]) && ( sort(py) > sort(px) )

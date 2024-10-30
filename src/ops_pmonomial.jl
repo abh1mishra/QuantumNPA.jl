@@ -49,8 +49,15 @@ function M2PM(m::Monomial)
             if pfirst!=plast
                 break
             end
+            if sort(pfirst)[1]< key
+                break
+            end
+            p_rest=subsElems(pfirst,key)
             ofirst=value[1][2][1]
             olast=value[end][2][end]
+            if !(all([ofirst==a.pword[i][1][2][1] for i in p_rest]) && all([olast==a.pword[i][end][1] for i in p_rest]))
+                break
+            end
             prod=ofirst*olast
             if(prod[1]==0)
                 return 0
@@ -58,11 +65,19 @@ function M2PM(m::Monomial)
             if(isempty(prod[2]))
                 pop!(value)
                 popfirst!(value)
+                for i in p_rest
+                    pop!(a.pword[i])
+                    popfirst!(a.pword[i])
+                end
                 continue
             end
             if(length(prod[2])==1)
                 value[end]=(pfirst,prod[2])
                 popfirst!(value)
+                for i in p_rest
+                    a.pword[i][end]=(a.pword[i][1][1],prod[2])
+                    popfirst!(a.pword[i])
+                end
                 continue
             end
             break
@@ -76,8 +91,9 @@ function Base.:(==)(x::PMonomial, y::PMonomial)
         for (key,value) in x.pword
             if length(value)==length(y.pword[key])
                 Str=string(Monomial(y.pword[key]))
-                conjStr=string(conj(Monomial(y.pword[key]),false))
-                if !( occursin(string(Monomial(value)), Str*" "*Str ) || occursin(string(Monomial(value)), conjStr*" "*conjStr ) )
+                # conjStr=string(conj(Monomial(y.pword[key]),false))
+                # if !( occursin(string(Monomial(value)), Str*" "*Str ) || occursin(string(Monomial(value)), conjStr*" "*conjStr ) )
+                if !occursin(string(Monomial(value)), Str*" "*Str )
                     return false
                 end
             else

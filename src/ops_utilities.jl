@@ -362,3 +362,9 @@ end
 function reduce_expr(expr, space::Linspace)
     return reduce_expr!(new_polynomial(expr), space)
 end
+
+
+function subsElems(A,elem)
+    A=sort(A)
+    return A[findfirst(x->x==elem,A)+1:end]
+end
